@@ -15,7 +15,7 @@
                     <div class="filtros-desplegable oculto" @click="toggleFiltros">
                         <i class="icon-filter" @click.stop="showFlavorFilter = !showFlavorFilter"></i>
                         <label for="flavor">Flavor</label>
-                        <select id="flavor" v-model="sabor" @change="getFlavors(sabor)">
+                        <select id="flavor" v-model="sabor" @change="filterProducts">
                             <option value="">Select a flavor</option>
                             <option value="dark chocolate">Dark Chocolate</option>
                             <option value="citrus">Citrus</option>
@@ -32,15 +32,18 @@
                         <div class="contenedor-peso">
                             <p>Select a weight</p>
                             <div>
-                                <input type="radio" name="weight" id="weight-300" value="300" v-model="peso" @change="getWeight(peso)">
+                                <input type="radio" name="weight" id="weight-300" value="300" v-model="peso"
+                                    @change="filterProducts">
                                 <p>300</p>
                             </div>
                             <div>
-                                <input type="radio" name="weight" id="weight-500" value="500" v-model="peso" @change="getWeight(peso)">
+                                <input type="radio" name="weight" id="weight-500" value="500" v-model="peso"
+                                    @change="filterProducts">
                                 <p>500</p>
                             </div>
                             <div>
-                                <input type="radio" name="weight" id="weight-700" value="700" v-model="peso" @change="getWeight(peso)">
+                                <input type="radio" name="weight" id="weight-700" value="700" v-model="peso"
+                                    @change="filterProducts">
                                 <p>700</p>
                             </div>
                         </div>
@@ -83,7 +86,7 @@ export default {
             carrito: userStore().cart,
             username: userStore().username,
             abierto: false,
-            sabor: "",
+            sabor: null,
             peso: null,
         };
     },
@@ -105,59 +108,79 @@ export default {
     },
     methods: {
 
-        //devuelve true o false para así poder determinar si el user activa o no el modo oscuro
         comprobarDarkMode() {
             const darkModeBtn = darkMode()
             return darkModeBtn.darkMode
         },
 
+        //este metodo rellena la url según los parámetros que estén rellenados en los filtros,
+        //ya que la url es diferente dependiendo de si el usuario quiere filtrar solo por sabores, solo por peso, o por ambos
+        async filterProducts() {
+            let url = 'http://localhost:8000/api/products/filter'
+
+            let params = new URLSearchParams()
+            if (this.sabor) params.append('flavor', this.sabor)
+            if (this.peso) params.append('weight', this.peso)
+
+            try {
+                const response = await fetch(`${url}?${params}`)
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`)
+                }
+                const products = await response.json()
+                this.products = products
+            } catch (error) {
+                console.error(error)
+            }
+        },
+
         async getProducts() {
             try {
-                const res = await fetch("http://localhost:8000/api/products");
-                const data = await res.json();
-                this.products = data;
+                const res = await fetch("http://localhost:8000/api/products")
+                const data = await res.json()
+                this.products = data
             }
             catch (error) {
-                console.error(error);
+                console.error(error)
             }
         },
         async getFlavors(sabor) {
             try {
-                const res = await fetch(`http://localhost:8000/api/products/flavors/${sabor}`);
-                const data = await res.json();
-                this.products = data;
+                const res = await fetch(`http://localhost:8000/api/products/flavors/${sabor}`)
+                const data = await res.json()
+                this.products = data
             }
             catch (error) {
-                console.error(error);
+                console.error(error)
             }
         },
         async getWeight(peso) {
             try {
-                const res = await fetch(`http://localhost:8000/api/products/weight/${peso}`);
-                const data = await res.json();
-                this.products = data;
+                const res = await fetch(`http://localhost:8000/api/products/weight/${peso}`)
+                const data = await res.json()
+                this.products = data
             }
             catch (error) {
-                console.error(error);
+                console.error(error)
             }
         },
         //lleva a la ruta del producto concreto
         navigationProduct(id) {
-            router.push(`/public/${id}`);
+            router.push(`/public/${id}`)
         },
 
         //se asegura de que el input no sea un espacio ni esté en blanco y luego hace la búsqueda
         async search(busqueda) {
             try {
                 if (busqueda.trim() === "") {
-                    return this.getProducts();
+                    return this.getProducts()
                 }
-                const res = await fetch(`http://localhost:8000/api/products/search?dato=${busqueda}`);
-                const data = await res.json();
-                this.products = data;
+                const res = await fetch(`http://localhost:8000/api/products/search?dato=${busqueda}`)
+                const data = await res.json()
+                this.products = data
             }
             catch (error) {
-                console.error(error);
+                console.error(error)
             }
         },
 
@@ -171,13 +194,13 @@ export default {
                     },
                 });
                 if (!response.ok) {
-                    console.error('Error al agregar el producto a la wishlist:', response.statusText);
-                    return;
+                    console.error('Error al agregar el producto a la wishlist:', response.statusText)
+                    return
                 }
-                this.wishlistNumbers.push(productId);
+                this.wishlistNumbers.push(productId)
             }
             catch (error) {
-                console.error('Error al agregar el producto a la wishlist:', error);
+                console.error('Error al agregar el producto a la wishlist:', error)
             }
         },
 
@@ -185,11 +208,11 @@ export default {
         addToCart(product) {
 
             //comprueba si el producto está o no en el carrito comparando sus ids
-            const index = this.carrito.findIndex((item) => item.id === product.id);
+            const index = this.carrito.findIndex((item) => item.id === product.id)
 
             //si está (es decir, findIndex NO devuelve un -1), se aumenta la cantidad del mismo en vez de añadirlo de nuevo
             if (index !== -1) {
-                this.carrito[index].cantidad += 1;
+                this.carrito[index].cantidad += 1
             }
 
             //si NO está, lo mete en el carrito con sus datos
@@ -219,11 +242,12 @@ export default {
     display: none;
 }
 
-.contenedor-filtros:hover .oculto{
+.contenedor-filtros:hover .oculto {
     display: unset;
 }
 
-.contenedor-peso div, .contenedor-peso p {
+.contenedor-peso div,
+.contenedor-peso p {
     display: flex;
     justify-content: center;
     gap: 1vh;
@@ -235,11 +259,14 @@ export default {
     background-color: white;
 }
 
-.contenedor-peso p, .contenedor-peso div {
+.contenedor-peso p,
+.contenedor-peso div {
     background-color: white;
 }
 
-#weight-300, #weight-500, #weight-700 {
+#weight-300,
+#weight-500,
+#weight-700 {
     width: 2vh;
     display: flex;
 }
