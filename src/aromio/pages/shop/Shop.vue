@@ -26,7 +26,7 @@
                             <option value="hazelnut">Hazelnut</option>
                             <option value="almond">Almond</option>
                             <option value="coconut">Coconut</option>
-                            <option value="cardamom">Cardamom</option>
+                            <option value="cardamom">Cadamom</option>
                             <option value="floral">Floral</option>
                         </select>
                         <div class="contenedor-peso">
