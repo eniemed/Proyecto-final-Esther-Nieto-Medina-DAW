@@ -14,21 +14,34 @@
                     </article>
                     <div class="filtros-desplegable oculto" @click="toggleFiltros">
                         <i class="icon-filter" @click.stop="showFlavorFilter = !showFlavorFilter"></i>
-                        <label for="flavor">Flavor</label>
-                        <select id="flavor" v-model="sabor" @change="filterProducts">
-                            <option value="">Select a flavor</option>
-                            <option value="dark chocolate">Dark Chocolate</option>
-                            <option value="citrus">Citrus</option>
-                            <option value="cocoa">Cocoa</option>
-                            <option value="nutty">Nutty</option>
-                            <option value="spicy">Spicy</option>
-                            <option value="blueberry">Blueberry</option>
-                            <option value="hazelnut">Hazelnut</option>
-                            <option value="almond">Almond</option>
-                            <option value="coconut">Coconut</option>
-                            <option value="cardamom">Cadamom</option>
-                            <option value="floral">Floral</option>
-                        </select>
+
+                        <div class="contenedor-selectores-filtros">
+                            <label for="flavor">Flavor</label>
+                            <select id="flavor" v-model="sabor" @change="filterProducts">
+                                <option selected value="">Select a flavor</option>
+                                <option value="dark chocolate">Dark Chocolate</option>
+                                <option value="citrus">Citrus</option>
+                                <option value="cocoa">Cocoa</option>
+                                <option value="nutty">Nutty</option>
+                                <option value="spicy">Spicy</option>
+                                <option value="blueberry">Blueberry</option>
+                                <option value="hazelnut">Hazelnut</option>
+                                <option value="almond">Almond</option>
+                                <option value="coconut">Coconut</option>
+                                <option value="cardamom">Cadamom</option>
+                                <option value="floral">Floral</option>
+                            </select>
+
+                            <label for="region">Region</label>
+                            <select id="region" v-model="region" @change="filterProducts">
+                                <option selected value="">Select a region</option>
+                                <option value="central america">Central America</option>
+                                <option value="africa">Africa</option>
+                                <option value="south america">South America</option>
+                                <option value="asia pacific">Asia Pacific</option>
+                                <option value="middle east">Middle East</option>
+                            </select>
+                        </div>
                         <div class="contenedor-peso">
                             <p>Select a weight</p>
                             <div>
@@ -46,6 +59,14 @@
                                     @change="filterProducts">
                                 <p>700</p>
                             </div>
+                        </div>
+                        <div class="contenedor-precio">
+                            <input type="range" list="tickmarks" />
+                            <datalist id="tickmarks">
+                                <option value="5" label="0%"></option>
+                                <option value="10"></option>
+                                <option value="15"></option>
+                            </datalist>
                         </div>
                     </div>
                 </article>
@@ -86,8 +107,9 @@ export default {
             carrito: userStore().cart,
             username: userStore().username,
             abierto: false,
-            sabor: null,
+            sabor: "",
             peso: null,
+            region: "",
         };
     },
     methods: {
@@ -121,6 +143,7 @@ export default {
             let params = new URLSearchParams()
             if (this.sabor) params.append('flavor', this.sabor)
             if (this.peso) params.append('weight', this.peso)
+            if (this.region) params.append('region', this.region)
 
             try {
                 const response = await fetch(`${url}?${params}`)
@@ -246,11 +269,20 @@ export default {
     display: unset;
 }
 
-.contenedor-peso div,
-.contenedor-peso p {
+.contenedor-selectores-filtros {
     display: flex;
-    justify-content: center;
+    padding: 2vh;
+}
+
+label {
+    display: none
+}
+
+.contenedor-peso div,
+.contenedor-peso p:first-child {
+    display: flex;
     gap: 1vh;
+    padding-left: 4vh;
 }
 
 .contenedor-peso {
@@ -260,6 +292,7 @@ export default {
 }
 
 .contenedor-peso p,
+.contenedor-selectores-filtros,
 .contenedor-peso div {
     background-color: white;
 }
@@ -269,6 +302,7 @@ export default {
 #weight-700 {
     width: 2vh;
     display: flex;
+
 }
 
 .contenedor-peso p {
@@ -276,17 +310,14 @@ export default {
     align-items: center;
 }
 
-#flavor {
+#flavor,
+#region {
     display: flex;
     margin: 0 auto;
     background-color: white;
     border-radius: 30px;
     font-size: 1.6vh;
     font-family: 'Alata', sans-serif;
-}
-
-label {
-    background-color: transparent;
 }
 
 .contenedor-peso label {
@@ -308,7 +339,7 @@ label {
 .filtros-desplegable {
     position: absolute;
     background-color: white;
-    width: 30vh;
+    width: 38vh;
     height: 30vh;
     box-shadow: rgb(135, 135, 135) 5px 6px 15px -5px;
     margin-top: 5.1vh;
