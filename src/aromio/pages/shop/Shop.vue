@@ -42,31 +42,32 @@
                                 <option value="middle east">Middle East</option>
                             </select>
                         </div>
-                        <div class="contenedor-peso">
-                            <p>Select a weight</p>
-                            <div>
-                                <input type="radio" name="weight" id="weight-300" value="300" v-model="peso"
-                                    @change="filterProducts">
-                                <p>300</p>
+                        <div class="peso-precio">
+                            <div class="contenedor-peso">
+                                <p>Select a weight</p>
+                                <div>
+                                    <input type="radio" name="weight" id="weight-300" value="300" v-model="peso"
+                                        @change="filterProducts">
+                                    <p>300</p>
+                                </div>
+                                <div>
+                                    <input type="radio" name="weight" id="weight-500" value="500" v-model="peso"
+                                        @change="filterProducts">
+                                    <p>500</p>
+                                </div>
+                                <div>
+                                    <input type="radio" name="weight" id="weight-700" value="700" v-model="peso"
+                                        @change="filterProducts">
+                                    <p>700</p>
+                                </div>
                             </div>
-                            <div>
-                                <input type="radio" name="weight" id="weight-500" value="500" v-model="peso"
-                                    @change="filterProducts">
-                                <p>500</p>
+                            <div class="contenedor-precio">
+                                <p class="contenedor-precio-frase">Choose a price range</p>
+                                <div @change="filterProducts" class="precio-frase">From <input type="number"
+                                        placeholder="Min." class="price-min" id="price-min" v-model="minPrice"> $</div>
+                                <div @change="filterProducts" class="precio-frase"> to <input type="number"
+                                        placeholder="Max." class="price-max" id="price-max" v-model="maxPrice"> $</div>
                             </div>
-                            <div>
-                                <input type="radio" name="weight" id="weight-700" value="700" v-model="peso"
-                                    @change="filterProducts">
-                                <p>700</p>
-                            </div>
-                        </div>
-                        <div class="contenedor-precio">
-                            <input type="range" list="tickmarks" />
-                            <datalist id="tickmarks">
-                                <option value="5" label="0%"></option>
-                                <option value="10"></option>
-                                <option value="15"></option>
-                            </datalist>
                         </div>
                     </div>
                 </article>
@@ -110,18 +111,9 @@ export default {
             sabor: "",
             peso: null,
             region: "",
+            minPrice: 0,
+            maxPrice: 999,
         };
-    },
-    methods: {
-        toggleFiltros() {
-            this.abierto = !this.abierto
-
-            if (this.abierto) {
-                document.querySelector('.filtros-desplegable').classList.add('oculto')
-            } else {
-                document.querySelector('.filtros-desplegable').classList.remove('oculto')
-            }
-        }
     },
 
     //cuando el componente se monta se recogen los productos y se almacenan en una variable
@@ -140,15 +132,21 @@ export default {
         async filterProducts() {
             let url = 'http://localhost:8000/api/products/filter'
 
-            let params = new URLSearchParams()
-            if (this.sabor) params.append('flavor', this.sabor)
-            if (this.peso) params.append('weight', this.peso)
-            if (this.region) params.append('region', this.region)
+            let params = '?'
+            if (this.sabor) params += `flavor=${this.sabor}&`
+            if (this.peso) params += `weight=${this.peso}&`
+            if (this.region) params += `region=${this.region}&`
+
+            let minPrice = this.minPrice !== "" ? this.minPrice : 0
+            let maxPrice = this.maxPrice !== "" ? this.maxPrice : 999
+
+            params += `minPrice=${minPrice}&`
+            params += `maxPrice=${maxPrice}`
 
             try {
-                const response = await fetch(`${url}?${params}`)
+                const response = await fetch(`${url}${params}`)
                 if (!response.ok) {
-                    throw new Error(`HTTP error! status: ${response.status}`)
+                    throw new Error(`error: ${response.status}`)
                 }
                 const products = await response.json()
                 this.products = products
@@ -256,6 +254,46 @@ export default {
 </script>
 
 <style scoped>
+.contenedor-peso {
+    width: 50%;
+
+}
+
+.peso-precio {
+    display: flex;
+
+}
+
+.precio-frase,
+.contenedor-precio-frase {
+    font-family: 'Alata', sans-serif;
+    color: rgb(0, 0, 0);
+    margin: 0 auto;
+    background-color: white;
+}
+
+.contenedor-precio-frase {
+    padding-bottom: 2vh;
+}
+
+.contenedor-precio {
+    background-color: white;
+    width: 50%;
+    padding-top: 2vh;
+}
+
+#price-min,
+#price-max {
+    width: 8vh;
+    height: 4vh;
+    border-radius: 10px;
+    margin: 0 1vh;
+}
+
+#price-max {
+    margin-left: 3.2vh;
+}
+
 .contenedor-filtros {
     display: flex;
     justify-content: center;
