@@ -61,13 +61,6 @@
                                     <p>700</p>
                                 </div>
                             </div>
-                            <div class="contenedor-precio">
-                                <p class="contenedor-precio-frase">Choose a price range</p>
-                                <div @change="filterProducts" class="precio-frase">From <input type="number"
-                                        placeholder="Min." class="price-min" id="price-min" v-model="minPrice"> $</div>
-                                <div @change="filterProducts" class="precio-frase"> to <input type="number"
-                                        placeholder="Max." class="price-max" id="price-max" v-model="maxPrice"> $</div>
-                            </div>
                         </div>
                     </div>
                 </article>
@@ -255,10 +248,10 @@ export default {
 
 <style scoped>
 .contenedor-peso {
-    width: 50%;
-
+    width: 100%;
 }
 
+/* 
 .peso-precio {
     display: flex;
 
@@ -292,7 +285,7 @@ export default {
 
 #price-max {
     margin-left: 3.2vh;
-}
+} */
 
 .contenedor-filtros {
     display: flex;
@@ -606,4 +599,12 @@ label {
         z-index: 2;
     }
 }
+
+/* <div class="contenedor-precio">
+    <p class="contenedor-precio-frase">Choose a price range</p>
+    <div @change="filterProducts" class="precio-frase">From <input type="number"
+            placeholder="Min." class="price-min" id="price-min" v-model="minPrice"> $</div>
+    <div @change="filterProducts" class="precio-frase"> to <input type="number"
+            placeholder="Max." class="price-max" id="price-max" v-model="maxPrice"> $</div>
+</div> */
 </style>
