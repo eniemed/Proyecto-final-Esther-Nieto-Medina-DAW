@@ -1,23 +1,23 @@
 <template>
-    <section class="carrito-contenedor">
+    <section :key="key" class="carrito-contenedor">
         <article class="carrito-desplegable">
             <div v-if="carrito.length === 0 || !detectarLogin()">
                 <p class="carrito-vacio">Nothing here yet! :(</p>
             </div>
             <div v-else>
                 <section class="contenedor-productos">
-                    <article v-for="item in carrito" :key="item.id" class="carrito-item">
+                    <article v-for="item in this.carrito" :key="item.id" class="carrito-item">
                         <img :src="item.image" :alt="item.name" class="carrito-imagen" />
                         <div class="carrito-detalle">
                             <p class="carrito-nombre">{{ item.name }}</p>
                             <div class="contenedor-cantidad">
-                                <img class="carrito-quitar-cantidad" @click="decreaseQuantity(item)"
+                                <img class="carrito-quitar-cantidad" @click="decreaseFromCart(item)"
                                     src="../../assets/minus.svg" alt="Remove one" />
-                                <p class="carrito-numero-cantidad">{{ item.cantidad }}</p>
-                                <img class="carrito-añadir-cantidad" @click="increaseQuantity(item)"
+                                <p class="carrito-numero-cantidad">{{ item.quantity }}</p>
+                                <img class="carrito-añadir-cantidad" @click="incrementFromCart(item)"
                                     src="../../assets/plus.svg" alt="Add one more" />
                             </div>
-                            <img src="../../assets/borrar.svg" class="carrito-borrar" @click="removeFromCart(item)"
+                            <img src="../../assets/borrar.svg" class="carrito-borrar" @click="removeAllFromCart(item)"
                                 alt="Remove from cart">
                         </div>
                     </article>
@@ -29,21 +29,85 @@
             </div>
 
         </article>
-        <img src="../../assets/carrito.svg" alt="Shopping cart">
+        <img @click="navigationCart" class="icono-carrito" src="../../assets/carrito.svg" alt="Shopping cart">
     </section>
 </template>
-  
+
 <script>
 import { userStore } from '../stores/userStore';
+import { almacen } from '../stores/almacen';
+import { getCurrentInstance } from 'vue';
+import router from "../router/router"
+
+
 
 export default {
 
     data() {
         return {
-            carrito: userStore().cart,
+            carrito: [],
+            products: [],
+            key: 1,
         };
     },
+    watch: {
+        carrito: function () {
+            this.carrito
+        },
+        quantity: function () {
+            this.quantity
+        }
+    },
+    computed: {
+        carrito() {
+            return almacen().carrito;
+        },
+    },
+    async created() {
+        await almacen().loadCart()
+        this.carrito = almacen().carrito
+    },
     methods: {
+
+        newKey() {
+            this.key += 1;
+        },
+
+        navigationCart() {
+            router.push("/public/cart");
+        },
+
+        async getProducts() {
+            console.log(this.carrito)
+            try {
+                const res = await fetch("http://localhost:8000/api/products")
+                const data = await res.json()
+                this.products = data
+            }
+            catch (error) {
+                console.error(error)
+            }
+        },
+
+        async removeAllFromCart(item) {
+            if (this.detectarLogin()) {
+                const productId = item.id;
+                this.carrito = this.carrito.filter(product => product.id !== productId);
+                const user = userStore()
+                fetch(`http://localhost:8000/api/user/${user.username}/cart/${item.id}/all`, {
+                    method: 'DELETE'
+                })
+                    .then(response => response.json())
+                    .then(data => {
+                        console.log(data);
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                    });
+            } else {
+                localStorage.removeItem('cart');
+            }
+        },
 
         //recoge el estado de loggedIn de la variable global para ver si está o no conectado y así mostrar o no el carrito del usuario
         detectarLogin() {
@@ -51,38 +115,103 @@ export default {
             return user.loggedIn
         },
 
-        //uso una vez más el findIndex para quitar el producto por id del carrito y lo actualizo en el localStorage también
-        removeFromCart(item) {
-            const index = this.carrito.findIndex((cartItem) => cartItem.id === item.id);
-            if (index !== -1) {
-                this.carrito.splice(index, 1);
-                this.updateLocalStorageCart();
-            }
+        countOccurrences(item) {
+            return this.carrito.filter(cartItem => cartItem.id === item.id).length;
         },
 
-        //aumenta la cantidad del producto en concreto y actualiza el carrito
-        increaseQuantity(item) {
-            item.cantidad += 1;
-            this.updateLocalStorageCart();
-        },
 
-        //disminuye la cantidad y actualiza. Si la cantidad del producto es 1 y la intenta disminuir, elimina el producto del carrito
-        decreaseQuantity(item) {
-            if (item.cantidad > 1) {
-                item.cantidad -= 1;
-            } else {
-                const index = this.carrito.findIndex((cartItem) => cartItem.id === item.id);
+        async decreaseFromCart(item) {
+            if (this.detectarLogin()) {
+                const index = this.carrito.indexOf(item.id);
                 if (index !== -1) {
                     this.carrito.splice(index, 1);
                 }
+                // Actualiza el carrito en la base de datos
+                const user = userStore()
+                fetch(`http://localhost:8000/api/user/${user.username}/cart/${item.id}`, {
+                    method: 'DELETE',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(this.carrito),
+                })
+                    .then(response => {
+                        if (!response.ok) {
+                            throw new Error('Network response was not ok');
+                        }
+                        // Actualiza el carrito en el componente después de actualizar el producto
+                        this.loadCart();
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                    });
+            } else {
+                // Si el usuario no está logueado, disminuye la cantidad del producto en el carrito en localStorage
+                const product = this.carrito.find(cartItem => cartItem.id === item.id);
+                if (product && product.quantity > 1) {
+                    // Si el producto existe y su cantidad es mayor a 1, disminuye la cantidad
+                    product.quantity--;
+                } else {
+                    // Si el producto solo tiene una cantidad, elimina el producto del carrito
+                    const index = this.carrito.findIndex(cartItem => cartItem.id === item.id);
+                    if (index !== -1) {
+                        this.carrito.splice(index, 1);
+                    }
+                }
+                localStorage.setItem('carrito', JSON.stringify(this.carrito));
             }
-            this.updateLocalStorageCart();
+            console.log(this.carrito)
         },
 
-        //borra el carrito entero y actualiza
-        emptyCart() {
-            this.carrito = [];
-            this.updateLocalStorageCart();
+        async loadCart() {
+            const instance = getCurrentInstance()
+            instance.proxy.forceUpdate()
+            if (this.detectarLogin()) {
+                const user = userStore()
+                return fetch(`http://localhost:8000/api/cart/${user.username}/products`)
+                    .then(response => response.json())
+                    .then(data => {
+                        this.carrito = data.products;
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                    });
+            } else {
+                this.carrito = JSON.parse(localStorage.getItem('carrito')) || [];
+                return Promise.resolve();
+            }
+
+
+        },
+
+        async incrementFromCart(item) {
+            // hacer que aumente la quantity, no introducir de nuevo el item en el array porque saldrá repetido
+
+
+            if (this.detectarLogin()) {
+                const user = userStore()
+                // Si el usuario está logueado, incrementa la cantidad del producto en el carrito en la base de datos
+                fetch(`http://localhost:8000/api/user/${user.username}/cart/${item.id}`, {
+                    method: 'POST',
+                })
+                    .then(response => {
+                        if (!response.ok) {
+                            throw new Error('error');
+                        }
+                        // Actualiza el carrito en el componente después de incrementar la cantidad del producto
+                        this.loadCart();
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                    });
+            } else {
+                // Si el usuario no está logueado, incrementa la cantidad del producto en el carrito en localStorage
+                const index = this.carrito.findIndex(cartItem => cartItem.id === item.id);
+                if (index !== -1) {
+                    this.carrito[index].quantity++;
+                    localStorage.setItem('carrito', JSON.stringify(this.carrito));
+                }
+            }
         },
 
         //simula la compra borrando el carrito también
@@ -96,10 +225,15 @@ export default {
             user.setCart(this.carrito)
         },
     },
+
 };
 </script>
-  
+
 <style scoped>
+.icono-carrito {
+    cursor: pointer;
+}
+
 .carrito-contenedor {
     font-family: "Alata", sans-serif;
     position: relative;
@@ -234,4 +368,3 @@ export default {
     font-size: 1.5vh;
 }
 </style>
-  

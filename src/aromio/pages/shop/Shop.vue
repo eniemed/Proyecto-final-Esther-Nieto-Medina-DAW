@@ -74,7 +74,7 @@
                     <h3 class="titulo">{{ product.name }}</h3>
                     <span class="precio">${{ product.price }}</span>
                     <div class="contenedor-btn">
-                        <button @click.stop="addToCart(product)" class="añadir-carrito">Add to cart ⟶</button>
+                        <button @click.stop="addToCart(product.id)" class="añadir-carrito">Add to cart ⟶</button>
                         <button @click.stop="addToWishlist(product.id)" class="añadir-favoritos"><img class="favoritos"
                                 src="../../../assets/corazon.svg" alt="Add to your wishlist"></button>
                     </div>
@@ -91,6 +91,7 @@ import { darkMode } from '@/aromio/stores/darkMode'
 import '@/assets/css/base.css'
 import '@/assets/css/darkMode.css'
 import { userStore } from '@/aromio/stores/userStore'
+import { almacen } from '@/aromio/stores/almacen'
 
 export default {
     data() {
@@ -98,21 +99,28 @@ export default {
             products: [],
             busqueda: "",
             wishlistNumbers: [],
-            carrito: userStore().cart,
+            carrito: [],
             username: userStore().username,
             abierto: false,
             sabor: "",
             peso: null,
             region: "",
-            minPrice: 0,
-            maxPrice: 999,
         };
     },
-
+    watch: {
+        carrito: function () {
+            this.carrito
+        }
+    },
+    async created() {
+        await almacen().loadCart()
+        this.carrito = almacen().carrito
+    },
     //cuando el componente se monta se recogen los productos y se almacenan en una variable
     mounted() {
         this.getProducts()
     },
+
     methods: {
 
         comprobarDarkMode() {
@@ -120,6 +128,32 @@ export default {
             return darkModeBtn.darkMode
         },
 
+        detectarLogin() {
+            const user = userStore()
+            return user.loggedIn
+        },
+
+        async loadCart() {
+            if (this.detectarLogin()) {
+                const user = userStore()
+                return fetch(`http://localhost:8000/api/cart/${user.username}/products`)
+                    .then(response => response.json())
+                    .then(data => {
+                        this.carrito = data.products;
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                    });
+            } else {
+                this.carrito = JSON.parse(localStorage.getItem('carrito')) || [];
+                return Promise.resolve();
+            }
+        },
+
+        addToCart(item) {
+            almacen().addToCart(item)
+            this.$emit('updateCart')
+        },
         //este metodo rellena la url según los parámetros que estén rellenados en los filtros,
         //ya que la url es diferente dependiendo de si el usuario quiere filtrar solo por sabores, solo por peso, o por ambos
         async filterProducts() {
@@ -129,12 +163,6 @@ export default {
             if (this.sabor) params += `flavor=${this.sabor}&`
             if (this.peso) params += `weight=${this.peso}&`
             if (this.region) params += `region=${this.region}&`
-
-            let minPrice = this.minPrice !== "" ? this.minPrice : 0
-            let maxPrice = this.maxPrice !== "" ? this.maxPrice : 999
-
-            params += `minPrice=${minPrice}&`
-            params += `maxPrice=${maxPrice}`
 
             try {
                 const response = await fetch(`${url}${params}`)
@@ -149,6 +177,7 @@ export default {
         },
 
         async getProducts() {
+            console.log(this.carrito)
             try {
                 const res = await fetch("http://localhost:8000/api/products")
                 const data = await res.json()
@@ -158,6 +187,7 @@ export default {
                 console.error(error)
             }
         },
+
         async getFlavors(sabor) {
             try {
                 const res = await fetch(`http://localhost:8000/api/products/flavors/${sabor}`)
@@ -219,28 +249,28 @@ export default {
         },
 
         //función añadir al carrito
-        addToCart(product) {
+        // addToCart(product) {
 
-            //comprueba si el producto está o no en el carrito comparando sus ids
-            const index = this.carrito.findIndex((item) => item.id === product.id)
+        //     //comprueba si el producto está o no en el carrito comparando sus ids
+        //     const index = this.carrito.findIndex((item) => item.id === product.id)
 
-            //si está (es decir, findIndex NO devuelve un -1), se aumenta la cantidad del mismo en vez de añadirlo de nuevo
-            if (index !== -1) {
-                this.carrito[index].cantidad += 1
-            }
+        //     //si está (es decir, findIndex NO devuelve un -1), se aumenta la cantidad del mismo en vez de añadirlo de nuevo
+        //     if (index !== -1) {
+        //         this.carrito[index].cantidad += 1
+        //     }
 
-            //si NO está, lo mete en el carrito con sus datos
-            else {
-                this.carrito.push({
-                    id: product.id,
-                    name: product.name,
-                    cantidad: 1,
-                    image: product.image,
-                });
-            }
-            const user = userStore()
-            user.setCart(this.carrito)
-        },
+        //     //si NO está, lo mete en el carrito con sus datos
+        //     else {
+        //         this.carrito.push({
+        //             id: product.id,
+        //             name: product.name,
+        //             cantidad: 1,
+        //             image: product.image,
+        //         });
+        //     }
+        //     const user = userStore()
+        //     user.setCart(this.carrito)
+        // },
     },
     components: { DarkModeBtn }
 }
@@ -410,7 +440,7 @@ label {
     height: 2.5vh;
     position: absolute;
     background-color: white;
-    margin-left: 22vh;
+    margin-left: 18vh;
     cursor: pointer;
 }
 

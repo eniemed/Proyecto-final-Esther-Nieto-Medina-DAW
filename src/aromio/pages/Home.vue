@@ -1,7 +1,7 @@
 <template>
     <main>
         <DarkModeBtn />
-        <section :class="[{ 'background-dark': comprobarDarkMode() }]">
+        <section class="contenedor-home">
             <article :class="['info-home', { 'background-dark': comprobarDarkMode() }]">
                 <h1
                     :class="['info-home-titulo', { 'background-dark': comprobarDarkMode(), 'color-white': comprobarDarkMode() }]">
@@ -84,7 +84,6 @@ export default {
     padding: 6vw;
     margin-left: 8.3vw;
     background-color: transparent;
-
 }
 
 .info-caracteristicas {

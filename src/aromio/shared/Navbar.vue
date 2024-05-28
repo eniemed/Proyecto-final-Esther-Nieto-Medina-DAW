@@ -15,11 +15,13 @@
                         :to="{ name: 'public-wishlist' }">Wishlist</router-link></li>
                 <li><router-link :class="{ 'color-white': comprobarDarkMode() }"
                         :to="{ name: 'public-contact' }">Contact</router-link></li>
+                <li><router-link :class="{ 'color-white': comprobarDarkMode() }"
+                        :to="{ name: 'public-FAQ' }">FAQ</router-link></li>
             </ul>
 
         </nav>
 
-        <Cart class="carrito" />
+        <Cart :key="cartKey" @updateCart="updateCartKey" class="carrito" />
 
         <nav>
             <div v-if="comprobarPrivate()">
@@ -51,10 +53,19 @@ import { darkMode } from '../stores/darkMode';
 import { userStore } from '../stores/userStore';
 export default {
     components: { Cart },
+    data(){
+        return {
+            cartKey: 0
+        }
+    },
     methods: {
         comprobarDarkMode() {
             const darkModeBtn = darkMode()
             return darkModeBtn.darkMode
+        },
+
+        updateCartKey() {
+            this.cartKey++
         },
 
         //comprueba si el usuario está o no loggeado para así mostrar una cosa u otra en el navbar (perfil privado o btn de login y registro)

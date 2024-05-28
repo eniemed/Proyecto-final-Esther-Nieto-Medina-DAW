@@ -2,15 +2,19 @@
 
   <Navbar/>
   <router-view />
+  <Footer v-if="$route.path !== '/public'"></Footer>
 
 </template>
 
 <script>
-import { defineAsyncComponent } from 'vue'
+
+import Navbar from './aromio/shared/Navbar.vue';
+import Footer from './aromio/shared/Footer.vue';
 
 export default {
   components: {
-    Navbar: defineAsyncComponent(() => import('./aromio/shared/Navbar.vue')),
+    Navbar,
+    Footer,
   },
 }
 </script>

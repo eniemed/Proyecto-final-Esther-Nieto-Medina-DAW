@@ -56,6 +56,16 @@ const routes = [
                     }
                 }
             },
+            {
+                path: 'cart',
+                name: 'public-cart',
+                component: () => import('../pages/shop/CartPage.vue'),
+            },
+            {
+                path: 'FAQ',
+                name: 'public-FAQ',
+                component: () => import('../pages/FAQ.vue'),
+            },
         ]
     },
     { 
