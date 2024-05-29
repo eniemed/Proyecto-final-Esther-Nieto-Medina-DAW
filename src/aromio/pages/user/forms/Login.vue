@@ -87,6 +87,7 @@ export default {
                     user.setUsername(data.user.username)
                     user.setEmail(data.user.email)
                     user.setPassword(data.user.password)
+                    user.setDiscount(data.user.discounts)
                     user.setLogin(true)
 
                     router.push("/public/shop");

@@ -10,6 +10,7 @@ export const userStore = defineStore('userState', {
         email: "",
         password: "",
         loggedIn: false,
+        discounts: "",
         cart: []
     }),
 
@@ -31,6 +32,9 @@ export const userStore = defineStore('userState', {
         },
         setLogin(value) {
             this.loggedIn = value
+        },
+        setDiscount(value) {
+            this.discount = value
         },
         setCart(value) {
             this.cart = value
