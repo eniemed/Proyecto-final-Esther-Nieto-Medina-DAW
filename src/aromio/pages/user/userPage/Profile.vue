@@ -3,11 +3,30 @@
         <section>
             <article class="user-info-top">
                 <div>
-                    <img src="../../../../assets/user-profile.png"
+                    <img class="user-info-top-img" src="../../../../assets/user-profile.png"
                         alt="Your profile picture">
                     <div class="user-info-top-details">
                         <p aria-label="User's full name">{{ first_name }} {{ last_name }}</p>
-                        <button @click="logOut" aria-label="Log out of your account">Log out</button>
+                        <section class="contenedor-btn-perfil">
+                            <article>
+                                <button class="edit-btn">
+                                    <img class="edit-img" src="../../../../assets/edit.svg" alt="Edit header">
+                                </button>
+                                <article class="contenedor-colores">
+                                    <button class="marron"></button>
+                                    <button class="rosa"></button>
+                                    <button class="amarillo"></button>
+                                    <button class="rojo"></button>
+                                    <button class="verde1"></button>
+                                    <button class="verde2"></button>
+                                    <button class="azul1"></button>
+                                    <button class="azul2"></button>
+                                    <button class="blanco"></button>
+                                </article>
+                            </article>
+                            
+                            <button class="user-info-top-details-button" @click="logOut" aria-label="Log out of your account">Log out</button>
+                        </section>
                     </div>
                 </div>
             </article>
@@ -25,6 +44,7 @@
                         <p class="label-email" id="emailLabel">Email</p>
                         <p class="email" aria-labelledby="emailLabel">{{ email }}</p>
                     </article>
+                    <button class="btn-orders" @click="navigationOrdersHistory()">Orders history</button>
                 </section>
             </article>
         </section>
@@ -64,6 +84,10 @@ export default {
             router.push("/")
         },
 
+        navigationOrdersHistory() {
+            router.push("/public/ordersHistory");
+        },
+
         //esta es la función que recoge los datos de user que he mencionado en el created
         datosUser() {
             const user = userStore()
@@ -79,7 +103,70 @@ export default {
 </script>
 
 <style scoped>
-.user-info-top img {
+.contenedor-colores {
+    position: absolute;
+    display: flex;
+    justify-content: space-between;
+    margin-top: 1em;
+    height: 15em;
+    width: 20em;
+    right: 20%;
+}
+
+.edit-btn, .edit-img {
+    background-color: transparent;
+    border: none;
+    cursor: pointer;
+    height: 2em;
+    width: 2em;
+}
+
+.edit-btn {
+    background-color: rgb(73, 30, 18);
+    border: none;
+    border-radius: 10px;
+    height: 3em;
+    width: 3em;
+    cursor: pointer;
+}
+
+.btn-orders {
+    background-color: rgb(73, 30, 18);
+    border: none;
+    border-radius: 20px;
+    height: 2em;
+    width: 9em;
+    color: white;
+    font-family: 'Alata', sans-serif;
+    font-size: 1em;
+    cursor: pointer;
+    margin-left: -1.3em;
+
+}
+
+.contenedor-btn-perfil {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: space-between;
+    background-color: transparent;
+    height: 100%;
+    padding: 1em 0;
+}
+
+a {
+    background-color: rgb(73, 30, 18);
+    border: none;
+    border-radius: 20px;
+    height: 1.7vw;
+    width: 9em;
+    color: white;
+    font-family: 'Alata', sans-serif;
+    font-size: 1em;
+    cursor: pointer;
+}
+
+.user-info-top-img {
     height: 10vw;
     width: auto;
     background-color: rgb(131, 73, 49);
@@ -110,13 +197,12 @@ export default {
 }
 
 .user-info-top-details p,
-.user-info-top-details button {
+.user-info-top-details-button {
     margin-left: 25px;
 }
 
-.user-info-top-details button {
+.user-info-top-details-button {
     margin-right: 1.2vw;
-    margin-top: 11.3vw;
     background-color: rgb(73, 30, 18);
     border: none;
     border-radius: 20px;
@@ -156,7 +242,7 @@ article>p {
 
 
 @media screen and (max-width: 1000px) {
-    .user-info-top-details button {
+    .user-info-top-details-button {
         font-size: 1.5vh;
         height: 4vh;
         width: 9vh;

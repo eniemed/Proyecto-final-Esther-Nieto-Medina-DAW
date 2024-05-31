@@ -32,9 +32,9 @@
                     <p class="shipping-texto">Shipping</p>
                     <p class="shipping-cantidad">3.46 $</p>
                 </article>
-                <article class="discount" v-if="fetchDiscount() !== null">
+                <article class="discount" v-if="discount > 0">
                     <p class="discount-texto">Discount</p>
-                    <p class="discount-cantidad">{{ discount * 100 }}%</p>
+                    <p class="discount-cantidad">{{ discount }}%</p>
                 </article>
                 <hr class="separador">
                 <article class="total">
@@ -83,11 +83,11 @@ export default {
             const response = await fetch(`http://localhost:8000/api/user/${user.username}`);
             const data = await response.json();
 
-            this.discount = data.discounts;
+            this.discount = data.discounts ? parseFloat(data.discounts) * 100 : 0;
 
-            console.log(data.discounts * 100)
+            console.log(this.discount)
 
-            return data.discounts * 100;
+            return this.discount;
         },
 
         calculateSubtotal() {
@@ -101,9 +101,10 @@ export default {
         calculateTotal() {
             this.calculateSubtotal();
             this.total = parseFloat((this.subtotal + 3.46).toFixed(2));
-            if (this.discount !== 0) {
-                this.total = parseFloat((this.total - (this.subtotal * parseFloat(this.discount) / 100)).toFixed(2));
+            if (this.discount > 0) {
+                this.total = parseFloat((this.total - (this.subtotal * parseFloat(this.discount / 100))).toFixed(2));
             }
+            
         },
 
         async getProducts() {

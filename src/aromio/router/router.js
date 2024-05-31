@@ -66,6 +66,11 @@ const routes = [
                 name: 'public-FAQ',
                 component: () => import('../pages/FAQ.vue'),
             },
+            {
+                path: 'ordersHistory',
+                name: 'public-ordersHistory',
+                component: () => import('../pages/user/userPage/OrdersHistory.vue'),
+            },
         ]
     },
     { 
@@ -85,7 +90,8 @@ const routes = [
                         next({name: 'public-home'})
                     }
                 }
-            }
+            },
+            
         ]
     },
     { 
