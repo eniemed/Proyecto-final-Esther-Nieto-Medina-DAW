@@ -4,18 +4,18 @@
       <article>
         <h1 id="contact-title">Contact us</h1>
         <p id="contact-text">Feel free to contact us anytime. We will get back to you as soon as we can!</p>
-        <form @submit.prevent="sendForm" aria-label="Contact form">
+        <form @submit.prevent="sendForm" aria-label="Contact form" id="form">
           <label for="email">Email</label>
-          <input id="email" v-model="email" type="email" name="email" @blur="emailValidation" placeholder="Email"
+          <input id="email_id" v-model="email" type="email" name="email_id" @blur="emailValidation" placeholder="Email"
             aria-required="true" aria-describedby="email-error">
           <span class="error" id="email-error" aria-live="assertive">{{ emailError }}</span>
 
           <label for="message">Message</label>
-          <textarea id="message" v-model="text" name="text" @blur="textValidation" placeholder="Message" aria-required="true"
-            aria-describedby="text-error"></textarea>
+          <textarea id="message" v-model="text" name="text" @blur="textValidation" placeholder="Message"
+            aria-required="true" aria-describedby="text-error"></textarea>
           <span class="error" id="text-error" aria-live="assertive">{{ textError }}</span>
 
-          <button type="submit">SEND</button>
+          <button type="submit" id="button">SEND</button>
         </form>
       </article>
     </section>
@@ -42,9 +42,10 @@
     </section>
   </main>
 </template>
-  
+
 <script>
 import router from "../../../router/router";
+import emailjs from '@emailjs/browser';
 
 export default {
   data() {
@@ -53,11 +54,23 @@ export default {
       text: "",
       emailRegex: /^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$/,
       emailError: "",
-      textError: ""
+      textError: "",
     }
   },
+  created() {
+    emailjs.init('oJfqu34e9fDWsNVvu')
+  },
   methods: {
-
+    sendEmail() {
+      emailjs.send('service_sxtxwv6', 'template_8yqj1ww', {
+        message: this.text,
+        email_id: this.email})
+        .then(response => {
+          console.log('SUCCESS!', response.status, response.text);
+        }, error => {
+          console.error('FAILED...', error);
+        });
+    },
     //método que valida el email con una expresión regular, además de asegurarse de que el campo no está vacío
     emailValidation() {
       if (this.email.trim() === "" || !this.emailRegex.test(this.email)) {
@@ -83,13 +96,14 @@ export default {
     //si las validaciones son correctas, manda a la shop al usuario
     sendForm() {
       if (this.emailValidation() && this.textValidation()) {
+        this.sendEmail()
         router.push("/public/shop")
       }
     }
   }
 }
 </script>
-  
+
 <style scoped>
 * {
   margin: 0;
@@ -313,4 +327,3 @@ textarea::placeholder {
 
 }
 </style>
-  

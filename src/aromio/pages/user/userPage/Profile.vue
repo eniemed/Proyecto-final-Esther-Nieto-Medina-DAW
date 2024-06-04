@@ -2,26 +2,34 @@
     <main>
         <section>
             <article class="user-info-top">
-                <div>
-                    <img class="user-info-top-img" src="../../../../assets/user-profile.png"
-                        alt="Your profile picture">
-                    <div class="user-info-top-details">
+                <div class="marron">
+                    <input type="file" accept="image/*" @change="onFileChange" ref="fileInput" class="input-img">
+                    <img class="user-info-top-img" v-if="imageUrl" :src="imageUrl" alt="Your profile picture" @click="triggerFileInput">
+                    <div class="user-info-top-details marron">
                         <p aria-label="User's full name">{{ first_name }} {{ last_name }}</p>
                         <section class="contenedor-btn-perfil">
-                            <article>
+                            <article class="contenedor-btn">
                                 <button class="edit-btn">
-                                    <img class="edit-img" src="../../../../assets/edit.svg" alt="Edit header">
+                                    <img @click="changeDisplay" class="edit-img" src="../../../../assets/edit.svg" alt="Edit header">
                                 </button>
                                 <article class="contenedor-colores">
-                                    <button class="marron"></button>
-                                    <button class="rosa"></button>
-                                    <button class="amarillo"></button>
-                                    <button class="rojo"></button>
-                                    <button class="verde1"></button>
-                                    <button class="verde2"></button>
-                                    <button class="azul1"></button>
-                                    <button class="azul2"></button>
-                                    <button class="blanco"></button>
+                                    <article class="contenedor-colores-fila1">
+                                        <button class="marron" @click="setClass('marron')"></button>
+                                        <button class="rosa" @click="setClass('rosa')"></button>
+                                        <button class="amarillo" @click="setClass('amarillo')"></button>
+                                    </article>
+
+                                    <article class="contenedor-colores-fila2">
+                                        <button class="rojo" @click="setClass('rojo')"></button>
+                                        <button class="verde1" @click="setClass('verde1')"></button>
+                                        <button class="verde2" @click="setClass('verde2')"></button>
+                                    </article>
+
+                                    <article class="contenedor-colores-fila3">
+                                        <button class="azul1" @click="setClass('azul1')"></button>
+                                        <button class="azul2" @click="setClass('azul2')"></button>
+                                        <button class="gris" @click="setClass('gris')"></button>
+                                    </article>
                                 </article>
                             </article>
                             
@@ -60,7 +68,9 @@ export default {
             first_name: "",
             last_name: "",
             username: "",
-            email: ""
+            email: "",
+            display: false,
+            imageUrl: '/src/assets/user-img.svg',
         }
     },
 
@@ -69,6 +79,33 @@ export default {
         this.datosUser()
     },
     methods: {
+        onFileChange(e) {
+            const file = e.target.files[0];
+            this.imageUrl = URL.createObjectURL(file);
+        },
+        triggerFileInput() {
+            this.$refs.fileInput.click();
+        },
+        changeDisplay() {
+            this.display = !this.display
+
+            if (this.display) {
+                document.querySelector('.contenedor-colores').style.display = 'flex'
+            } else {
+                document.querySelector('.contenedor-colores').style.display = 'none'
+            }
+        },
+
+        setClass(clase) {
+            const userDiv = document.querySelector('.user-info-top div');
+            const userInfoTop = document.querySelector('.user-info-top-details');
+            
+            
+            userDiv.classList.remove('marron', 'rosa', 'amarillo', 'rojo', 'verde1', 'verde2', 'azul1', 'azul2', 'gris');
+            userInfoTop.classList.remove('marron', 'rosa', 'amarillo', 'rojo', 'verde1', 'verde2', 'azul1', 'azul2', 'gris');
+            userDiv.classList.add(clase);
+            userInfoTop.classList.add(clase);
+        },
 
         //desconecta al usuario estableciendo loggedIn en false y todo lo demás lo vacia excepto el carrito, que simplemente no se mostrará
         //cuando loggedIn sea false
@@ -103,15 +140,79 @@ export default {
 </script>
 
 <style scoped>
+.input-img{
+    display: none;
+
+}
+.contenedor-btn {
+    background-color: transparent;
+}
+
+.marron{
+    background-color: rgb(131, 73, 49);
+}
+
+.rosa{
+    background-color: rgb(219 120 189);
+}
+
+.amarillo{
+    background-color: rgb(253 255 121);
+}
+
+.rojo{
+    background-color: rgb(255 84 84);
+}
+
+.verde1{
+    background-color: rgb(98 167 113);
+}
+
+.verde2{
+    background-color: rgb(170 233 149);
+}
+
+.azul1{
+    background-color: rgb(103 116 177);
+}
+
+.azul2{
+    background-color: rgb(163 238 255);
+}
+
+.gris{
+    background-color: rgb(161 161 161);
+}
+
 .contenedor-colores {
     position: absolute;
     display: flex;
+    flex-direction: column;
     justify-content: space-between;
-    margin-top: 1em;
-    height: 15em;
-    width: 20em;
+    padding: 1em;
+    height: 11em;
+    width: 16em;
     right: 20%;
+    z-index: 1;
+    border: 1px solid rgb(209, 209, 209);
 }
+
+.contenedor-colores article {
+    display: flex;
+    justify-content: space-between;
+}
+
+.contenedor-colores button {
+    border: none;
+    cursor: pointer;
+    height: 3em;
+    width: 3em;
+    border-radius: 10%;
+    flex-wrap: wrap;
+    border: none;
+    margin: 0 0.5em;
+}
+
 
 .edit-btn, .edit-img {
     background-color: transparent;
@@ -119,6 +220,10 @@ export default {
     cursor: pointer;
     height: 2em;
     width: 2em;
+}
+
+.contenedor-colores {
+    display: none;
 }
 
 .edit-btn {
@@ -168,16 +273,18 @@ a {
 
 .user-info-top-img {
     height: 10vw;
-    width: auto;
-    background-color: rgb(131, 73, 49);
-    padding-left: 1vw;
+    width: 10vw;
+    background-color: transparent;
+    margin-left: 1vw;
+    border-radius: 75%;
+    object-fit: cover;
+    object-position: center;
 }
 
 .user-info-top div {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    background-color: rgb(131, 73, 49);
     font-family: 'Alata', sans-serif;
     color: white;
     width: 50vw;
@@ -192,7 +299,7 @@ a {
 }
 
 .user-info-top-details p {
-    background-color: rgb(131, 73, 49);
+    background-color: transparent;
     font-size: 1.25rem;
 }
 
