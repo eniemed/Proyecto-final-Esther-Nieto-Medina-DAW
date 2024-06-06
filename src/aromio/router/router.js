@@ -71,6 +71,11 @@ const routes = [
                 name: 'public-ordersHistory',
                 component: () => import('../pages/user/userPage/OrdersHistory.vue'),
             },
+            {
+                path: 'giftCenter',
+                name: 'public-giftCenter',
+                component: () => import('../pages/GiftCenter.vue'),
+            },
         ]
     },
     { 

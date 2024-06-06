@@ -16,6 +16,8 @@
                 <li><router-link :class="{ 'color-white': comprobarDarkMode() }"
                         :to="{ name: 'public-contact' }">Contact</router-link></li>
                 <li><router-link :class="{ 'color-white': comprobarDarkMode() }"
+                        :to="{ name: 'public-giftCenter' }">Gift Center</router-link></li>  
+                <li><router-link :class="{ 'color-white': comprobarDarkMode() }"
                         :to="{ name: 'public-FAQ' }">FAQ</router-link></li>
             </ul>
 
