@@ -1,5 +1,5 @@
 <template>
-    <header :class="{ 'background-dark': comprobarDarkMode(), 'color-white': comprobarDarkMode() }">
+    <header>
         <router-link :to="{ name: 'public-home' }">
             <img src="../../assets/logo.png" alt="Aromio" />
         </router-link>
@@ -7,17 +7,17 @@
 
         <nav>
             <ul id="links">
-                <li><router-link :class="{ 'color-white': comprobarDarkMode() }"
+                <li><router-link
                         :to="{ name: 'public-home' }">Home</router-link></li>
-                <li><router-link :class="{ 'color-white': comprobarDarkMode() }"
+                <li><router-link
                         :to="{ name: 'public-shop' }">Shop</router-link></li>
-                <li><router-link :class="{ 'color-white': comprobarDarkMode() }"
+                <li><router-link
                         :to="{ name: 'public-wishlist' }">Wishlist</router-link></li>
-                <li><router-link :class="{ 'color-white': comprobarDarkMode() }"
+                <li><router-link
                         :to="{ name: 'public-contact' }">Contact</router-link></li>
-                <li><router-link :class="{ 'color-white': comprobarDarkMode() }"
+                <li><router-link
                         :to="{ name: 'public-giftCenter' }">Gift Center</router-link></li>  
-                <li><router-link :class="{ 'color-white': comprobarDarkMode() }"
+                <li><router-link
                         :to="{ name: 'public-FAQ' }">FAQ</router-link></li>
             </ul>
 
@@ -36,7 +36,7 @@
             </div>
 
             <ul id="auth" v-if="!comprobarPrivate()">
-                <li><router-link :class="{ 'color-white': comprobarDarkMode() }" :to="{ name: 'public-login' }">Log
+                <li><router-link :to="{ name: 'public-login' }">Log
                         in</router-link></li>
                 <li>
                     <router-link :to="{ name: 'public-signup' }">
