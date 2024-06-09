@@ -1,5 +1,5 @@
 <template>
-    <main :class="['fondo', { 'background-dark': comprobarDarkMode() }]">
+    <main class='fondo'>
         <DarkModeBtn />
 
         <section>
@@ -10,7 +10,7 @@
                     <button @click="navigateShop">Accept</button>
                 </div>
             </article>
-            <article :class="['contenedor-buscador', { 'background-dark': comprobarDarkMode() }]">
+            <article class='contenedor-buscador'>
                 <label for="buscador">Search</label>
                 <input v-model="busqueda" id="buscador" type="search" @keyup.enter="search(busqueda)"
                     placeholder="Search...">
@@ -73,8 +73,8 @@
                     </div>
                 </article>
             </article>
-            <article :class="['contenedor-cards', { 'background-dark': comprobarDarkMode() }]">
-                <div :class="['card', { 'card-oscuro': comprobarDarkMode() }]" @click="navigationProduct(product.id)"
+            <article class='contenedor-cards'>
+                <div class='card' @click="navigationProduct(product.id)"
                     v-for="product in products" :key="product.id">
                     <img class="imagen" :src="product.image" :alt="product.name">
                     <div :class="['circulo', 'circulo-' + product.id]"></div>
