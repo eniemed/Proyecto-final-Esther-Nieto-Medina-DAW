@@ -10,7 +10,8 @@
                     <div class="contenedor-pack">
                         <div class="contenedor-titulo-borrar">
                             <input class="titulo" type="text" :value="'Pack ' + (index + 1)">
-                            <img @click="removeGiftPack(index)" class="borrar-pack" src="../../assets/borrar-pack.svg" alt="Delete pack">
+                            <img @click="removeGiftPack(index)" class="borrar-pack" src="../../assets/borrar-pack.svg"
+                                alt="Delete pack">
                         </div>
 
                         <div class="cuerpo-pack">
@@ -30,7 +31,7 @@
                                         src="../../assets/borrar.svg" alt="Remove product from pack">
                                 </article>
                             </article>
-
+                            
                         </div>
                         <select @change="addProductToPack(index, $event.target.value)" class="gift-product"
                             name="gift-product" :id=index>
@@ -62,12 +63,13 @@ export default {
 
     },
     methods: {
+
         async removeGiftPack(packIndex) {
-            // Eliminar el pack de regalo en el índice dado
+            //eliminar el pack de regalo en el índice dado
             this.giftPacks = [...this.giftPacks.slice(0, packIndex), ...this.giftPacks.slice(packIndex + 1)];
 
             const user = userStore();
-            // Realizar la llamada a la API para eliminar el pack de regalo en el servidor
+            //realizar la llamada a la API para eliminar el pack de regalo en la bd
             fetch(`http://localhost:8000/api/user/${user.username}/pack/${packIndex}`, {
                 method: 'DELETE',
             })
@@ -78,51 +80,54 @@ export default {
                 });
 
         },
+
         async addProductToPack(packId, productId) {
-            // Añadir el producto al pack correspondiente
+            //añadir el producto al pack correspondiente
             if (packId >= 0 && packId < this.giftPacks.length) {
                 this.giftPacks[packId].push(productId);
             }
 
-            // Obtener el nombre de usuario
+            //obtener el nombre de usuario
             const user = userStore();
 
-            // Realizar la llamada HTTP
+            //realizar la llamada HTTP
             try {
                 const response = await fetch(`http://localhost:8000/api/user/${user.username}/add/${packId}/product/${productId}`, {
                     method: 'POST',
                 });
 
-                // Comprobar si la llamada HTTP fue exitosa
                 if (!response.ok) {
-                    throw new Error(`HTTP error! status: ${response.status}`);
+                    throw new Error(`error status: ${response.status}`);
                 }
 
-                // Actualizar la vista o manejar la respuesta de la llamada HTTP si es necesario
             } catch (error) {
-                console.error('There was a problem with the fetch operation: ' + error.message);
+                console.error('error: ' + error.message);
             }
 
+            
+            //vuelve a cargar los packs de regalo
             this.getGiftPacks();
             this.getProducts();
         },
         async removeProductFromGiftPack(packId, productId) {
-            // Verificar si el índice del pack es válido
+            //verificar si el índice del pack es válido
             if (packId >= 0 && packId < this.giftPacks.length) {
-                // Encontrar el índice del producto en el pack
+                //encontrar el índice del producto en el pack
                 const productIndex = this.giftPacks[packId].indexOf(productId);
 
-                // Verificar si el producto está en el pack
+                //verificar si el producto está en el pack
                 if (productIndex !== -1) {
-                    // Eliminar el producto del pack
+                    //eliminar el producto del pack
                     this.giftPacks[packId].splice(productIndex, 1);
                 } else {
-                    console.error('Product not found in the specified pack');
+                    console.error('Product not found in the pack');
                 }
             } else {
                 console.error('Pack index out of range');
             }
             const user = userStore();
+
+            //se llama a la API para eliminar el producto del pack
             try {
                 const response = await fetch(`http://localhost:8000/api/users/${user.username}/gift-packs/${packId}/products/${productId}`, {
                     method: 'DELETE',
@@ -137,15 +142,18 @@ export default {
                 console.error('Error:', error);
             }
 
+            //cuenta las ocurrencias del producto en el pack por su id y el indice del pack
             this.countProductOccurrences(packId, productId);
         },
+
+        //funcion que cuenta las ocurrencias de un producto en un pack
         countProductOccurrences(packId, productId) {
             if (packId >= 0 && packId < this.giftPacks.length) {
-                // Obtener el pack específico
+                //se obtiene el pack específico
                 const pack = this.giftPacks[packId];
-                // Contador para almacenar el número de ocurrencias del producto
+                //y se inicia un contador para almacenar el número de ocurrencias del producto
                 let count = 0;
-                // Recorrer el pack y contar las ocurrencias del producto
+                //recorro el pack y cuento las ocurrencias del producto
                 for (const id of pack) {
                     if (id === productId) {
                         count++;
@@ -153,14 +161,23 @@ export default {
                 }
                 return count;
             } else {
-                return 0; // Si el índice de pack es inválido, devolvemos 0
+                // Si el índice de pack no es valido se devuelve 0
+                return 0; 
             }
         },
+
+        //funcion que devuelve los productos únicos de un pack (sin repeticiones)
         uniqueProducts(pack) {
             return [...new Set(pack)];
         },
+
+        //funcion que elimina todas las ocurrencias de un producto en un pack
         async deleteAllInstancesFromPack(packId, productId) {
+
+            //comprueba que el id es valido
             if (packId >= 0 && packId < this.giftPacks.length) {
+
+                //busca el índice del producto en el pack
                 let productIndex = this.giftPacks[packId].indexOf(productId);
                 while (productIndex !== -1) {
                     this.giftPacks[packId].splice(productIndex, 1);
@@ -198,6 +215,8 @@ export default {
             console.log(this.giftPacks);
         },
 
+        //funcion que muestra el select para añadir productos al pack
+        //cambiando entre true y false una funcion que juega con el display del contenedor
         showSelect(index) {
             this.clicked = !this.clicked;
             const selectElement = document.getElementById(index);
@@ -241,6 +260,23 @@ export default {
 
 
 <style scoped>
+
+.btn-add-giftpack {
+    height: 3em;
+    width: 8em;
+    margin-top: 2em;
+    background-color: rgb(53, 35, 16);
+    color: white;
+    border: none;
+    font-family: 'Alata', sans-serif;
+    border-radius: 30px;
+    font-size: 1.2em;
+    justify-self: center;
+    cursor: pointer;
+    align-self: end;
+    margin-bottom: 1em
+}
+
 .contenedor-titulo-borrar {
     display: flex;
     justify-content: space-between;

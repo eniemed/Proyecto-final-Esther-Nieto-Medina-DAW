@@ -1,6 +1,14 @@
 <template>
   <main aria-label="Contact us">
+    <article v-if="enviado" class="comprado-fondo">
+      <div class="contenedor-comprado-mensaje">
+        <h2>Message sent!</h2>
+        <p>We will contact you as soon as we can, thank you for your patience!</p>
+        <button @click="navigateShop">Accept</button>
+      </div>
+    </article>
     <section>
+
       <article>
         <h1 id="contact-title">Contact us</h1>
         <p id="contact-text">Feel free to contact us anytime. We will get back to you as soon as we can!</p>
@@ -37,7 +45,6 @@
             <li>9:00 - 16:00</li>
           </ul>
         </div>
-        <img class="beans" src="../../../../assets/beans-photo.png" alt="Coffee beans">
       </article>
     </section>
   </main>
@@ -55,21 +62,27 @@ export default {
       emailRegex: /^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$/,
       emailError: "",
       textError: "",
+      enviado: false
     }
   },
+
+  //uso emailjs (servicio serverless) para que el formulario sea funcional y mande correos reales
   created() {
+
     emailjs.init('oJfqu34e9fDWsNVvu')
   },
   methods: {
     sendEmail() {
       emailjs.send('service_sxtxwv6', 'template_8yqj1ww', {
         message: this.text,
-        email_id: this.email})
+        email_id: this.email
+      })
         .then(response => {
           console.log('SUCCESS!', response.status, response.text);
         }, error => {
           console.error('FAILED...', error);
         });
+      this.enviado = true
     },
     //método que valida el email con una expresión regular, además de asegurarse de que el campo no está vacío
     emailValidation() {
@@ -92,12 +105,14 @@ export default {
         return true
       }
     },
+    navigateShop() {
+      this.$router.push('/public/shop');
+    },
 
     //si las validaciones son correctas, manda a la shop al usuario
     sendForm() {
       if (this.emailValidation() && this.textValidation()) {
         this.sendEmail()
-        router.push("/public/shop")
       }
     }
   }
@@ -111,6 +126,62 @@ export default {
   box-sizing: border-box;
   background-color: rgb(243, 239, 238);
 }
+
+.comprado-fondo {
+  position: absolute;
+  height: 100vh;
+  width: 100%;
+  background-color: rgba(0, 0, 0, 0.46);
+}
+
+.contenedor-comprado-mensaje {
+  position: absolute;
+  top: 30%;
+  left: 35%;
+  height: 20em;
+  width: 35em;
+  border-radius: 20px;
+  padding: 2em;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+
+}
+
+.contenedor-comprado-mensaje h2,
+p {
+  background-color: transparent;
+  text-align: center;
+
+}
+
+.contenedor-comprado-mensaje h2 {
+  font-family: 'Archivo Black', sans-serif;
+  color: rgb(68, 49, 27);
+  font-size: 2em;
+}
+
+.contenedor-comprado-mensaje p {
+  font-family: 'Alata', sans-serif;
+  font-size: 1.2em;
+  padding-top: 1em
+}
+
+.contenedor-comprado-mensaje button {
+  height: 3em;
+  width: 8em;
+  margin-top: 2em;
+  background-color: rgb(53, 35, 16);
+  color: white;
+  border: none;
+  font-family: 'Alata', sans-serif;
+  border-radius: 30px;
+  font-size: 1.2em;
+  justify-self: center;
+  cursor: pointer;
+}
+
 
 label {
   color: transparent;
@@ -182,7 +253,7 @@ main {
 }
 
 
-div {
+.contenedor-info {
   background-color: rgb(73, 30, 18);
   width: 30vw;
   height: 90%;
@@ -202,7 +273,7 @@ div {
   height: 2vw;
 }
 
-article:first-child {
+.cuerpo {
   position: relative;
   width: 30vw;
   margin-top: 4vw;

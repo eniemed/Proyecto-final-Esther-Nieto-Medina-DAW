@@ -6,14 +6,14 @@
             </div>
             <div v-else>
                 <section class="contenedor-productos">
-                    <article v-for="item in this.carrito" :key="item.id" class="carrito-item">
+                    <article v-for="item in carrito" :key="newKey" class="carrito-item">
                         <img :src="item.image" :alt="item.name" class="carrito-imagen" />
                         <div class="carrito-detalle">
                             <p class="carrito-nombre">{{ item.name }}</p>
                             <div class="contenedor-cantidad">
                                 <img class="carrito-quitar-cantidad" @click="decreaseFromCart(item)"
                                     src="../../assets/minus.svg" alt="Remove one" />
-                                <p class="carrito-numero-cantidad">{{ item.quantity }}</p>
+                                <p class="carrito-numero-cantidad">{{ countProductOccurrences(item.id) }}</p>
                                 <img class="carrito-añadir-cantidad" @click="incrementFromCart(item)"
                                     src="../../assets/plus.svg" alt="Add one more" />
                             </div>
@@ -36,7 +36,6 @@
 <script>
 import { userStore } from '../stores/userStore';
 import { almacen } from '../stores/almacen';
-import { getCurrentInstance } from 'vue';
 import router from "../router/router"
 
 
@@ -46,7 +45,10 @@ export default {
     data() {
         return {
             carrito: [],
+            carritoOccurrences: [],
             products: [],
+            carritoCounts: [],
+            checkout: false,
             key: 1,
         };
     },
@@ -54,59 +56,95 @@ export default {
         carrito: function () {
             this.carrito
         },
-        quantity: function () {
-            this.quantity
-        }
     },
     computed: {
-        carrito() {
-            return almacen().carrito;
+        cart() {
+            this.carrito = almacen().carrito
+            return this.carrito
         },
     },
     async created() {
+        this.detectarLogin()
+        this.loadCart()
         await almacen().loadCart()
+        await this.getProducts()
+        await this.loadCarritoOccurrences()
         this.carrito = almacen().carrito
+        this.updateCarritoCounts()
+
     },
     methods: {
+        emptyCart() {
+            if (this.detectarLogin()) {
+                const user = userStore()
+                fetch(`http://localhost:8000/api/user/${user.username}/clear-cart`, {
+                    method: 'POST',
+                })
+                    .then(response => {
+                        if (!response.ok) {
+                            throw new Error('Network response was not ok');
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                    });
+
+                    //reseteo todas las variables que guardan datos o indices del carrito
+                    this.carrito = [];
+                    this.carritoOccurrences = [];
+                    this.carritoCounts = [];
+                    this.updateCarritoCounts();
+            } else {
+                this.carrito = [];
+                localStorage.setItem('carrito', JSON.stringify(this.carrito));
+                this.updateCarritoOccurrences();
+            }
+        },
+
+        //carga en la variable carritoOccurrences todos los productos del carrito, incluso los repetidos
+        async loadCarritoOccurrences() {
+            const user = userStore()
+            if (user.loggedIn) {
+                const response = await fetch(`http://localhost:8000/api/user/${user.username}/cart`);
+                const data = await response.json();
+                this.carritoOccurrences = data
+            } else {
+                this.carritoOccurrences = [];
+            }
+            this.updateCarritoCounts();
+        },
+        countProductOccurrences(productId) {
+            return this.carritoOccurrences.filter(item => item === productId).length;
+        },
+
+        //uso flatMap que mapea y aplana el array para que no haya arrays dentro de arrays
+        updateCarritoOccurrences() {
+            this.carritoOccurrences = this.carrito.flatMap(item => Array(item.quantity).fill(item.id));
+        },
+
+        async getProducts() {
+            try {
+                const res = await fetch("http://localhost:8000/api/products")
+                const data = await res.json()
+                this.products = data
+                return this.products
+            } catch (error) {
+                console.error(error)
+                return []
+            }
+        },
 
         newKey() {
-            this.key += 1;
+            return this.key += 1;
         },
 
         navigationCart() {
             router.push("/public/cart");
         },
 
-        async getProducts() {
-            console.log(this.carrito)
-            try {
-                const res = await fetch("http://localhost:8000/api/products")
-                const data = await res.json()
-                this.products = data
-            }
-            catch (error) {
-                console.error(error)
-            }
-        },
-
         async removeAllFromCart(item) {
-            if (this.detectarLogin()) {
-                const productId = item.id;
-                this.carrito = this.carrito.filter(product => product.id !== productId);
-                const user = userStore()
-                fetch(`http://localhost:8000/api/user/${user.username}/cart/${item.id}/all`, {
-                    method: 'DELETE'
-                })
-                    .then(response => response.json())
-                    .then(data => {
-                        console.log(data);
-                    })
-                    .catch(error => {
-                        console.error('Error:', error);
-                    });
-            } else {
-                localStorage.removeItem('cart');
-            }
+            const almacenInstance = almacen()
+            almacenInstance.removeAllFromCart(item);
         },
 
         //recoge el estado de loggedIn de la variable global para ver si está o no conectado y así mostrar o no el carrito del usuario
@@ -115,18 +153,16 @@ export default {
             return user.loggedIn
         },
 
-        countOccurrences(item) {
-            return this.carrito.filter(cartItem => cartItem.id === item.id).length;
-        },
 
 
         async decreaseFromCart(item) {
+
             if (this.detectarLogin()) {
                 const index = this.carrito.indexOf(item.id);
                 if (index !== -1) {
                     this.carrito.splice(index, 1);
                 }
-                // Actualiza el carrito en la base de datos
+                //actualiza el carrito en la base de datos
                 const user = userStore()
                 fetch(`http://localhost:8000/api/user/${user.username}/cart/${item.id}`, {
                     method: 'DELETE',
@@ -139,20 +175,23 @@ export default {
                         if (!response.ok) {
                             throw new Error('Network response was not ok');
                         }
-                        // Actualiza el carrito en el componente después de actualizar el producto
+                        //actualiza el carrito después de actualizar el producto
                         this.loadCart();
                     })
                     .catch(error => {
                         console.error('Error:', error);
                     });
+                    await this.loadCarritoOccurrences()
+                    this.countProductOccurrences(item.id)
+                    this.updateCarritoCounts();
             } else {
-                // Si el usuario no está logueado, disminuye la cantidad del producto en el carrito en localStorage
+                //si el usuario no está loggeado, disminuye la cantidad del producto en el carrito en localStorage
                 const product = this.carrito.find(cartItem => cartItem.id === item.id);
                 if (product && product.quantity > 1) {
-                    // Si el producto existe y su cantidad es mayor a 1, disminuye la cantidad
+                    //si el producto existe y su cantidad es mayor a 1, disminuye la cantidad
                     product.quantity--;
                 } else {
-                    // Si el producto solo tiene una cantidad, elimina el producto del carrito
+                    //si el producto solo tiene una cantidad, elimina el producto del carrito
                     const index = this.carrito.findIndex(cartItem => cartItem.id === item.id);
                     if (index !== -1) {
                         this.carrito.splice(index, 1);
@@ -160,12 +199,17 @@ export default {
                 }
                 localStorage.setItem('carrito', JSON.stringify(this.carrito));
             }
-            console.log(this.carrito)
+            this.updateCarritoOccurrences();
+            
+        },
+        updateCarritoCounts() {
+            const counts = this.carrito.map(item => {
+                return this.carritoOccurrences.filter(id => id === item.id).length;
+            });
+            this.carritoCounts = counts;
         },
 
         async loadCart() {
-            const instance = getCurrentInstance()
-            instance.proxy.forceUpdate()
             if (this.detectarLogin()) {
                 const user = userStore()
                 return fetch(`http://localhost:8000/api/cart/${user.username}/products`)
@@ -178,6 +222,7 @@ export default {
                     });
             } else {
                 this.carrito = JSON.parse(localStorage.getItem('carrito')) || [];
+                console.log(this.carrito)
                 return Promise.resolve();
             }
 
@@ -185,12 +230,10 @@ export default {
         },
 
         async incrementFromCart(item) {
-            // hacer que aumente la quantity, no introducir de nuevo el item en el array porque saldrá repetido
-
 
             if (this.detectarLogin()) {
                 const user = userStore()
-                // Si el usuario está logueado, incrementa la cantidad del producto en el carrito en la base de datos
+                //si el usuario está logueado, incrementa la cantidad del producto en el carrito en la base de datos
                 fetch(`http://localhost:8000/api/user/${user.username}/cart/${item.id}`, {
                     method: 'POST',
                 })
@@ -198,14 +241,17 @@ export default {
                         if (!response.ok) {
                             throw new Error('error');
                         }
-                        // Actualiza el carrito en el componente después de incrementar la cantidad del producto
+                        //actualiza el carrito en el componente después de incrementar la cantidad del producto
                         this.loadCart();
                     })
                     .catch(error => {
                         console.error('Error:', error);
                     });
+                    await this.loadCarritoOccurrences()
+                    this.countProductOccurrences(item.id)
+                    this.updateCarritoCounts();
             } else {
-                // Si el usuario no está logueado, incrementa la cantidad del producto en el carrito en localStorage
+                //si el usuario no está loggeado, incrementa la cantidad del producto en el carrito en localStorage
                 const index = this.carrito.findIndex(cartItem => cartItem.id === item.id);
                 if (index !== -1) {
                     this.carrito[index].quantity++;
@@ -214,9 +260,52 @@ export default {
             }
         },
 
-        //simula la compra borrando el carrito también
-        buy() {
-            this.emptyCart();
+        //simula la compra
+        async buy() {
+            const user = userStore()
+            try {
+
+                //elimina el descuento (ya que el descuento es para primeras compras solamente)
+
+                await fetch(`http://localhost:8000/api/user/${user.username}/clear-discount`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+            } catch (error) {
+                console.error('Error:', error);
+            }
+
+            //establece checkout en true para que se muestre el mensaje de confirmacion de la compra que se ha realizado
+            this.checkout = true
+            try {
+
+                //añade a la tabla orders un nuevo pedido con el usuario correspondiente
+                await fetch(`http://localhost:8000/api/user/${user.username}/add-order`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+            } catch (error) {
+                console.error('Error:', error);
+            }
+            try {
+
+                //por último borra el carrito
+                await fetch(`http://localhost:8000/api/user/${user.username}/clear-cart`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+            } catch (error) {
+                console.error('Error:', error);
+            }
         },
 
         //establece el carrito de la variable global
@@ -230,6 +319,60 @@ export default {
 </script>
 
 <style scoped>
+.comprado-fondo {
+    position: absolute;
+    height: 100vh;
+    width: 100%;
+    background-color: rgba(0, 0, 0, 0.46);
+}
+
+.contenedor-comprado-mensaje {
+    position: absolute;
+    top: 30%;
+    left: 35%;
+    height: 20em;
+    width: 35em;
+    border-radius: 20px;
+    padding: 2em;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+
+}
+
+.contenedor-comprado-mensaje h2,
+p {
+    background-color: transparent;
+    text-align: center;
+
+}
+
+.contenedor-comprado-mensaje h2 {
+    font-family: 'Archivo Black', sans-serif;
+    color: rgb(68, 49, 27);
+    font-size: 2em;
+}
+
+.contenedor-comprado-mensaje p {
+    font-family: 'Alata', sans-serif;
+    font-size: 1.2em;
+    padding-top: 1em
+}
+
+.contenedor-comprado-mensaje button {
+    height: 3em;
+    width: 8em;
+    margin-top: 2em;
+    background-color: rgb(53, 35, 16);
+    color: white;
+    border: none;
+    font-family: 'Alata', sans-serif;
+    border-radius: 30px;
+    font-size: 1.2em;
+    justify-self: center;
+    cursor: pointer;
+}
 .icono-carrito {
     cursor: pointer;
 }

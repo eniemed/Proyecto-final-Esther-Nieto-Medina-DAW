@@ -1,5 +1,12 @@
 <template>
     <section class="contenedor-carrito">
+        <article v-if="checkout" class="comprado-fondo">
+            <div class="contenedor-comprado-mensaje">
+                <h2>Your purchase was successful!</h2>
+                <p>Thank you for your trust, fellow coffee lover!</p>
+                <button @click="navigateShop">Accept</button>
+            </div>
+        </article>
         <article class="encabezado-carrito">
             <h1>Shopping cart</h1>
             <h1>3 items</h1>
@@ -13,7 +20,7 @@
                         <div class="contenedor-cantidad">
                             <img class="carrito-quitar-cantidad" @click="" src="../../../assets/minus.svg"
                                 alt="Remove one" />
-                            <p class="carrito-numero-cantidad">3</p>
+                            <p class="carrito-numero-cantidad">1</p>
                             <img class="carrito-añadir-cantidad" @click="" src="../../../assets/plus.svg"
                                 alt="Add one more" />
                         </div>
@@ -42,7 +49,7 @@
                     <p class="total-cantidad">{{ total }} $</p>
                 </article>
                 <div class="contenedor-btn">
-                    <button>Checkout</button>
+                    <button @click="clearDiscount">Checkout</button>
                 </div>
 
             </article>
@@ -65,6 +72,7 @@ export default {
             subtotal: 0,
             total: 0,
             discount: 0,
+            checkout: false
         };
     },
 
@@ -78,11 +86,63 @@ export default {
     },
     methods: {
 
+        //función que elimina el descuento del usuario. Esto se lleva a cabo cuando hace su primera compra
+        async clearDiscount() {
+            const user = userStore()
+            try {
+                await fetch(`http://localhost:8000/api/user/${user.username}/clear-discount`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+            } catch (error) {
+                console.error('Error:', error);
+            }
+            //esta variable se utiliza para mostrar el mensaje de compra realizada
+            this.checkout = true
+
+            //como la compra se ha realizado, se añade el pedido a la tabla de pedidos
+            try {
+                await fetch(`http://localhost:8000/api/user/${user.username}/add-order`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+            } catch (error) {
+                console.error('Error:', error);
+            }
+
+            //y se vacia el carrito
+            try {
+                await fetch(`http://localhost:8000/api/user/${user.username}/clear-cart`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+            } catch (error) {
+                console.error('Error:', error);
+            }
+
+        },
+
+        navigateShop() {
+            this.$router.push('/public/shop');
+        },
+
+        //recoge el descuento del usuario y lo establece en la variable discount
         async fetchDiscount() {
             const user = userStore()
             const response = await fetch(`http://localhost:8000/api/user/${user.username}`);
             const data = await response.json();
 
+            //si encuentra descuento lo multiplico por 100 para que sea un porcentaje
+            //si no encuentra, se establece en 0
             this.discount = data.discounts ? parseFloat(data.discounts) * 100 : 0;
 
             console.log(this.discount)
@@ -90,6 +150,7 @@ export default {
             return this.discount;
         },
 
+        //calcula el subtotal, que es la suma de los precios de los productos redondeados a 2 decimales
         calculateSubtotal() {
             this.subtotal = 0;
             this.carrito.forEach(item => {
@@ -98,17 +159,18 @@ export default {
             this.subtotal = parseFloat(this.subtotal.toFixed(2));
         },
 
+        //le suma los gastos de envio y realiza el descuento (si hay), dando como resultado el total de la compra
         calculateTotal() {
             this.calculateSubtotal();
             this.total = parseFloat((this.subtotal + 3.46).toFixed(2));
             if (this.discount > 0) {
                 this.total = parseFloat((this.total - (this.subtotal * parseFloat(this.discount / 100))).toFixed(2));
             }
-            
+
         },
 
+        //recoge todos los productos y los guarda en el array products para un acceso más facil a ellos y sus campos
         async getProducts() {
-            console.log(this.carrito)
             try {
                 const res = await fetch("http://localhost:8000/api/products")
                 const data = await res.json()
@@ -123,6 +185,63 @@ export default {
 </script>
 
 <style scoped>
+.comprado-fondo {
+    position: absolute;
+    height: 100vh;
+    width: 100%;
+    background-color: rgba(0, 0, 0, 0.46);
+}
+
+.contenedor-comprado-mensaje {
+    position: absolute;
+    top: 30%;
+    left: 35%;
+    height: 20em;
+    width: 35em;
+    border-radius: 20px;
+    padding: 2em;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+
+}
+
+.contenedor-comprado-mensaje h2,
+p {
+    background-color: transparent;
+    text-align: center;
+
+}
+
+.contenedor-comprado-mensaje h2 {
+    font-family: 'Archivo Black', sans-serif;
+    color: rgb(68, 49, 27);
+    font-size: 2em;
+}
+
+.contenedor-comprado-mensaje p {
+    font-family: 'Alata', sans-serif;
+    font-size: 1.2em;
+    padding-top: 1em
+}
+
+.contenedor-comprado-mensaje button {
+    height: 3em;
+    width: 8em;
+    margin-top: 2em;
+    background-color: rgb(53, 35, 16);
+    color: white;
+    border: none;
+    font-family: 'Alata', sans-serif;
+    border-radius: 30px;
+    font-size: 1.2em;
+    justify-self: center;
+    cursor: pointer;
+}
+
+
+
 .contenedor-btn {
     display: flex;
     justify-content: center;

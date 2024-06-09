@@ -28,6 +28,7 @@ import { userStore } from "@/aromio/stores/userStore";
 export default {
     data() {
         return {
+            //array que recogerá los pedidos de usuario
             orders: [],
         }
     },
@@ -35,6 +36,11 @@ export default {
         this.getOrders();
     },
     methods: {
+
+        //esta funcion recoge el campo date de la tabla de pedidos y lo compara con la fecha de hace 3 días
+        //de esta manera simulo que los pedidos de hace 3 días o más ya han sido enviados
+        //lo cual se reflejará en la página con una foto asignada diferente a los pedidos no enviados
+        //y con un estado que dirá delivered si ya fue entregado o pending si no
         orderDate(item) {
             const orderDate = new Date(item.date);
             const threeDaysAgo = new Date();

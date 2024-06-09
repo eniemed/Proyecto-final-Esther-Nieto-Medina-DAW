@@ -1,7 +1,15 @@
 <template>
     <main :class="['fondo', { 'background-dark': comprobarDarkMode() }]">
         <DarkModeBtn />
+
         <section>
+            <article v-if="checkout" class="comprado-fondo">
+                <div class="contenedor-comprado-mensaje">
+                    <h2>Your purchase was successful!</h2>
+                    <p>Thank you for your trust, fellow coffee lover!</p>
+                    <button @click="navigateShop">Accept</button>
+                </div>
+            </article>
             <article :class="['contenedor-buscador', { 'background-dark': comprobarDarkMode() }]">
                 <label for="buscador">Search</label>
                 <input v-model="busqueda" id="buscador" type="search" @keyup.enter="search(busqueda)"
@@ -99,7 +107,7 @@ export default {
             products: [],
             busqueda: "",
             wishlistNumbers: [],
-            carrito: [],
+            carrito: almacen().carrito,
             username: userStore().username,
             abierto: false,
             sabor: "",
@@ -107,53 +115,52 @@ export default {
             region: "",
         };
     },
-    watch: {
-        carrito: function () {
-            this.carrito
-        }
-    },
-    async created() {
-        await almacen().loadCart()
-        this.carrito = almacen().carrito
-    },
-    //cuando el componente se monta se recogen los productos y se almacenan en una variable
-    mounted() {
+    created() {
         this.getProducts()
+        this.createCart()
     },
 
     methods: {
 
-        comprobarDarkMode() {
-            const darkModeBtn = darkMode()
-            return darkModeBtn.darkMode
-        },
-
+        //comprueba si el usuario está loggeado y devuelve true o false
+        //userStore guarda todos los datos del usuario, si se conecta convierte loggedIn en true
+        //si no, el store se crea con todos los campos vacios y loggedIn en false
         detectarLogin() {
             const user = userStore()
             return user.loggedIn
         },
 
-        async loadCart() {
-            if (this.detectarLogin()) {
-                const user = userStore()
-                return fetch(`http://localhost:8000/api/cart/${user.username}/products`)
-                    .then(response => response.json())
-                    .then(data => {
-                        this.carrito = data.products;
-                    })
-                    .catch(error => {
-                        console.error('Error:', error);
-                    });
+        //añade un producto al carrito
+        addToCart(productId) {
+            if (!this.detectarLogin()) {
+
+                const product = this.products.find(product => product.id === productId);
+
+                if (product) {
+                    //añade el producto al carrito en el estado del componente
+                    this.carrito.push(product);
+
+                    //guarda el carrito en localStorage
+                    localStorage.setItem('carrito', JSON.stringify(this.carrito));
+
+                    //actualiza el carrito en el estado del componente con los datos de LS
+                    this.carrito = JSON.parse(localStorage.getItem('carrito'));
+                }
             } else {
-                this.carrito = JSON.parse(localStorage.getItem('carrito')) || [];
-                return Promise.resolve();
+                //si el user esta conectado se ejecuta la funcion de añadir al carrito del almacen (store)
+                const almacenInstance = almacen()
+                almacenInstance.addToCart(productId);
+            }
+        },
+        createCart() {
+
+            //crea el carrito en el LS si no existe
+
+            if (!localStorage.getItem('carrito')) {
+                localStorage.setItem('carrito', JSON.stringify([]));
             }
         },
 
-        addToCart(item) {
-            almacen().addToCart(item)
-            this.$emit('updateCart')
-        },
         //este metodo rellena la url según los parámetros que estén rellenados en los filtros,
         //ya que la url es diferente dependiendo de si el usuario quiere filtrar solo por sabores, solo por peso, o por ambos
         async filterProducts() {
@@ -164,6 +171,7 @@ export default {
             if (this.peso) params += `weight=${this.peso}&`
             if (this.region) params += `region=${this.region}&`
 
+            //le aplica a la url el parametro deseado
             try {
                 const response = await fetch(`${url}${params}`)
                 if (!response.ok) {
@@ -177,7 +185,6 @@ export default {
         },
 
         async getProducts() {
-            console.log(this.carrito)
             try {
                 const res = await fetch("http://localhost:8000/api/products")
                 const data = await res.json()
@@ -247,30 +254,6 @@ export default {
                 console.error('Error al agregar el producto a la wishlist:', error)
             }
         },
-
-        //función añadir al carrito
-        // addToCart(product) {
-
-        //     //comprueba si el producto está o no en el carrito comparando sus ids
-        //     const index = this.carrito.findIndex((item) => item.id === product.id)
-
-        //     //si está (es decir, findIndex NO devuelve un -1), se aumenta la cantidad del mismo en vez de añadirlo de nuevo
-        //     if (index !== -1) {
-        //         this.carrito[index].cantidad += 1
-        //     }
-
-        //     //si NO está, lo mete en el carrito con sus datos
-        //     else {
-        //         this.carrito.push({
-        //             id: product.id,
-        //             name: product.name,
-        //             cantidad: 1,
-        //             image: product.image,
-        //         });
-        //     }
-        //     const user = userStore()
-        //     user.setCart(this.carrito)
-        // },
     },
     components: { DarkModeBtn }
 }
@@ -280,42 +263,6 @@ export default {
 .contenedor-peso {
     width: 100%;
 }
-
-/* 
-.peso-precio {
-    display: flex;
-
-}
-
-.precio-frase,
-.contenedor-precio-frase {
-    font-family: 'Alata', sans-serif;
-    color: rgb(0, 0, 0);
-    margin: 0 auto;
-    background-color: white;
-}
-
-.contenedor-precio-frase {
-    padding-bottom: 2vh;
-}
-
-.contenedor-precio {
-    background-color: white;
-    width: 50%;
-    padding-top: 2vh;
-}
-
-#price-min,
-#price-max {
-    width: 8vh;
-    height: 4vh;
-    border-radius: 10px;
-    margin: 0 1vh;
-}
-
-#price-max {
-    margin-left: 3.2vh;
-} */
 
 .contenedor-filtros {
     display: flex;
@@ -630,11 +577,4 @@ label {
     }
 }
 
-/* <div class="contenedor-precio">
-    <p class="contenedor-precio-frase">Choose a price range</p>
-    <div @change="filterProducts" class="precio-frase">From <input type="number"
-            placeholder="Min." class="price-min" id="price-min" v-model="minPrice"> $</div>
-    <div @change="filterProducts" class="precio-frase"> to <input type="number"
-            placeholder="Max." class="price-max" id="price-max" v-model="maxPrice"> $</div>
-</div> */
 </style>

@@ -61,10 +61,7 @@ export default {
         }
     },
     methods: {
-        comprobarDarkMode() {
-            const darkModeBtn = darkMode()
-            return darkModeBtn.darkMode
-        },
+
 
         updateCartKey() {
             this.cartKey++

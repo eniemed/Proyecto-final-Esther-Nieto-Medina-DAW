@@ -6,10 +6,13 @@ import { userStore } from '../stores/userStore';
 export const almacen = defineStore('almacenState', {
   state: () => ({
     products: [],
-    carrito: []
+    carrito: [],
+
   }),
 
   actions: {
+    
+    
     async getProducts() {
       try {
         const res = await fetch("http://localhost:8000/api/products")
@@ -23,17 +26,23 @@ export const almacen = defineStore('almacenState', {
     },
 
     async addToCart(productId) {
-      const productData = this.products.find(product => product.id === productId);
 
-      // Comprueba si el producto ya está en el carrito
+      await this.getProducts();
+      await this.loadCart();
+
+      //comprueba si el producto ya está en el carrito
       const productInCart = this.carrito.find(cartItem => cartItem.id === productId);
 
-      // Si el producto no está en el carrito, lo añade
+      //si el producto no está en el carrito, lo añade
       if (!productInCart) {
+        const productData = this.products.find(product => product.id === productId);
         this.carrito.push(productData);
+
       }
       const user = userStore()
       if (user.loggedIn) {
+
+        //añade el producto en la bd
         fetch(`http://localhost:8000/api/user/${user.username}/cart/${productId}`, {
           method: 'POST',
         })
@@ -43,9 +52,6 @@ export const almacen = defineStore('almacenState', {
               throw new Error('error');
 
             }
-            const productDataEntero = this.products.find(product => product.id === productId);
-            console.log(productDataEntero);
-            this.carrito.push(productDataEntero);
 
           })
           .catch(error => {
@@ -57,7 +63,27 @@ export const almacen = defineStore('almacenState', {
         localStorage.setItem('carrito', JSON.stringify(carrito));
       }
     },
+    async removeAllFromCart(item) {
 
+      const productId = item.id;
+      this.carrito = this.carrito.filter(product => product.id !== productId);
+      const user = userStore()
+      fetch(`http://localhost:8000/api/user/${user.username}/cart/${item.id}/all`, {
+        method: 'DELETE'
+      })
+        .then(response => response.json())
+        .then(data => {
+          console.log(data);
+        })
+        .catch(error => {
+          console.error('Error:', error);
+        });
+
+    },
+
+
+    //recoge y almacena en un array que es una variable global los datos del carrito para poder
+    //acceder a él desde varias partes de la aplicacion y no perder sincronía
     async loadCart() {
       const user = userStore()
       if (user.loggedIn) {
@@ -70,6 +96,8 @@ export const almacen = defineStore('almacenState', {
             console.error('Error:', error);
           });
       }
+
+
     },
   },
 });

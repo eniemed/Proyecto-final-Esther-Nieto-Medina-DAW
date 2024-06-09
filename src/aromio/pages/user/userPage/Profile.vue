@@ -79,13 +79,18 @@ export default {
         this.datosUser()
     },
     methods: {
+
+        //función que recoge la imagen que el usuario sube y la muestra en el perfil
         onFileChange(e) {
             const file = e.target.files[0];
             this.imageUrl = URL.createObjectURL(file);
         },
+        //función que abre el input de tipo file para que el usuario pueda subir una imagen
+        //cuando le hace click a la img de perfil
         triggerFileInput() {
             this.$refs.fileInput.click();
         },
+        //función que cambia el display de los colores para cambiar el color de fondo del perfil
         changeDisplay() {
             this.display = !this.display
 
@@ -95,7 +100,7 @@ export default {
                 document.querySelector('.contenedor-colores').style.display = 'none'
             }
         },
-
+        //función que cambia el color de fondo del perfil
         setClass(clase) {
             const userDiv = document.querySelector('.user-info-top div');
             const userInfoTop = document.querySelector('.user-info-top-details');
